@@ -2,6 +2,7 @@ package com.danifgx.acortadirecciones.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,6 +16,7 @@ public class Url {
     @Id
     private String id;
 
+    @NonNull
     private String originalUrl;
 
     private LocalDateTime creationDate;

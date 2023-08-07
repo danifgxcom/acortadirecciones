@@ -1,7 +1,9 @@
 package com.danifgx.acortadirecciones.controller;
 
+import com.danifgx.acortadirecciones.dao.UrlRequest;
 import com.danifgx.acortadirecciones.service.UrlService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +21,9 @@ public class UrlController {
     }
 
     @PostMapping
-    public ResponseEntity<String> shortenUrl(@RequestBody String url) {
-        String id = urlService.shortenUrl(url);
+    public ResponseEntity<String> shortenUrl(@RequestBody @Valid UrlRequest urlRequest) {
+        String originalUrl = urlRequest.getUrl().trim();
+        String id = urlService.shortenUrl(originalUrl);
         return new ResponseEntity<>(id, HttpStatus.CREATED);
     }
 

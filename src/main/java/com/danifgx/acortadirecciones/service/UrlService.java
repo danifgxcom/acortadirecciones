@@ -50,6 +50,6 @@ public class UrlService {
 
     private String generateRandomId() {
         // Truncate to 50 characters if you want
-        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 50);
+        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 32);
     }
 }
