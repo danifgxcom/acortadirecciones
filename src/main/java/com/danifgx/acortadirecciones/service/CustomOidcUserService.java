@@ -5,43 +5,42 @@ import com.danifgx.acortadirecciones.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+public class CustomOidcUserService extends OidcUserService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CustomOidcUserService.class);
 
     private final UserRepository userRepository;
 
     @Autowired
-    CustomOAuth2UserService(UserRepository userRepository) {
+    CustomOidcUserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+    public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
         logger.info("Entering LOAD USER");
 
-        OAuth2User oAuth2User;
+        OidcUser oidcUser;
         try {
-            oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
+            oidcUser = super.loadUser(userRequest);
         } catch (Exception e) {
-            logger.error("Error while loading user from OAuth2 request", e);
-            OAuth2Error oauth2Error = new OAuth2Error("loading_user_error", "Failed to load user from OAuth2 request", null);
+            logger.error("Error while loading user from OIDC request", e);
+            OAuth2Error oauth2Error = new OAuth2Error("loading_user_error", "Failed to load user from OIDC request", null);
             throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString());
         }
 
         try {
-            String email = oAuth2User.getAttribute("email");
+            String email = oidcUser.getAttribute("email");
             Optional<User> existingUser = userRepository.findByEmail(email);
 
             if (existingUser.isPresent()) {
@@ -51,7 +50,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 // Si el usuario no está registrado, guárdalo en la base de datos
                 User newUser = new User();
                 newUser.setEmail(email);
-                newUser.setSource("Google-OAuth2.0");
+                newUser.setSource("Google-OIDC");
                 userRepository.save(newUser);
                 logger.info("Registered new user with email: {}", email);
             }
@@ -62,6 +61,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString());
         }
 
-        return oAuth2User;
+        return oidcUser;
     }
 }
