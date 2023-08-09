@@ -6,6 +6,9 @@ import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.repository.UrlLogRepository;
 import com.danifgx.acortadirecciones.repository.UrlRepository;
+import com.danifgx.acortadirecciones.service.verification.GoogleSafeBrowsingVerifier;
+import com.danifgx.acortadirecciones.service.verification.SimpleVerifier;
+import com.danifgx.acortadirecciones.service.verification.VerificationChainHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +22,35 @@ public class UrlService {
 
     private final UrlRepository urlRepository;
     private final UrlLogRepository urlLogRepository;
+    private final VerificationChainHandler verificationHandler;
+    private final SimpleVerifier simpleVerifier;
+    private final GoogleSafeBrowsingVerifier googleSafeBrowsingVerifier;
 
     @Value("${base.url}")
     private String baseUrl;
 
-
-    public UrlService(UrlRepository urlRepository, UrlLogRepository urlLogRepository) {
+    public UrlService(
+            UrlRepository urlRepository,
+            UrlLogRepository urlLogRepository,
+            VerificationChainHandler verificationHandler,
+            SimpleVerifier simpleVerifier,
+            GoogleSafeBrowsingVerifier googleSafeBrowsingVerifier
+    ) {
         this.urlRepository = urlRepository;
         this.urlLogRepository = urlLogRepository;
+        this.verificationHandler = verificationHandler;
+        this.simpleVerifier = simpleVerifier;
+        this.googleSafeBrowsingVerifier = googleSafeBrowsingVerifier;
+
+        this.verificationHandler.addVerifier(simpleVerifier);
+        this.verificationHandler.addVerifier(googleSafeBrowsingVerifier);
     }
 
     public String shortenUrl(String originalUrl) {
+        if (!verificationHandler.verifyUrl(originalUrl)) {
+            throw new IllegalArgumentException("¡URL no es segura o no está permitida!");
+        }
+
         Optional<UrlLog> existingLog = urlLogRepository.findByOriginalUrl(originalUrl);
         if (existingLog.isPresent()) {
             return existingLog.get().getId();

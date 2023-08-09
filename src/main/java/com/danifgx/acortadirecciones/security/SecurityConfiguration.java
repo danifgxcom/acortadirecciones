@@ -18,7 +18,6 @@ public class SecurityConfiguration {
 
     private final CustomOidcUserService customOidcUserService;
 
-    @Autowired
     public SecurityConfiguration(CustomOidcUserService customOidcUserService) {
         this.customOidcUserService = customOidcUserService;
     }
