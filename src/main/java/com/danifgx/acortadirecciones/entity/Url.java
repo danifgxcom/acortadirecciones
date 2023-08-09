@@ -1,15 +1,16 @@
 package com.danifgx.acortadirecciones.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Document(collection = "urls")
 public class Url {
 
@@ -19,8 +20,12 @@ public class Url {
     @NonNull
     private String originalUrl;
 
+    private String shortenedUrlId;
+
+    private String shortenedBaseUrl;
+
     private LocalDateTime creationDate;
 
-    @Indexed(expireAfterSeconds = 24 * 60 * 60)
+    @Indexed(expireAfterSeconds = 0)
     private LocalDateTime expiryDate;
 }

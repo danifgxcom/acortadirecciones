@@ -7,4 +7,5 @@ import lombok.*;
 @AllArgsConstructor
 public class UrlRequest {
     private String url;
+    private int expirationHours;
 }

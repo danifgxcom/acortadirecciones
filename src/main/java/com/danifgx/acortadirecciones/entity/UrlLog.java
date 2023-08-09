@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -16,7 +17,9 @@ public class UrlLog {
 
     private String originalUrl;
 
-    private String shortenedUrl;
+    private String shortenedBaseUrl;
+
+    private String shortenedUrlId;
 
     private LocalDateTime creationDate;
 }
