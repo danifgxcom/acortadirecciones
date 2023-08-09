@@ -9,6 +9,7 @@ import com.danifgx.acortadirecciones.repository.UrlRepository;
 import com.danifgx.acortadirecciones.service.verification.GoogleSafeBrowsingVerifier;
 import com.danifgx.acortadirecciones.service.verification.SimpleVerifier;
 import com.danifgx.acortadirecciones.service.verification.VerificationChainHandler;
+import com.danifgx.acortadirecciones.service.verification.VerificationResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -42,13 +43,14 @@ public class UrlService {
         this.simpleVerifier = simpleVerifier;
         this.googleSafeBrowsingVerifier = googleSafeBrowsingVerifier;
 
-        this.verificationHandler.addVerifier(simpleVerifier);
+        //this.verificationHandler.addVerifier(simpleVerifier);
         this.verificationHandler.addVerifier(googleSafeBrowsingVerifier);
     }
 
     public String shortenUrl(String originalUrl) {
-        if (!verificationHandler.verifyUrl(originalUrl)) {
-            throw new IllegalArgumentException("¡URL no es segura o no está permitida!");
+        VerificationResponse response = verificationHandler.verifyUrl(originalUrl);
+        if (!response.isSuccess()) {
+            throw new IllegalArgumentException("¡URL no es segura o no está permitida! Rechazado por: " + response.getFailedVerifier());
         }
 
         Optional<UrlLog> existingLog = urlLogRepository.findByOriginalUrl(originalUrl);

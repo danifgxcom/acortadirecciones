@@ -20,19 +20,13 @@ public class SimpleVerifier implements UrlVerifier {
         this.blacklistedKeywords = Arrays.asList(blacklistedKeywordsString.split(","));
     }
 
-
     @Override
-    public boolean verify(String url) {
-        System.out.println(this.blacklistedKeywords);
-        for (String keyword : this.blacklistedKeywords) {
+    public VerificationResponse verify(String url) {
+        for (String keyword : blacklistedKeywords) {
             if (url.contains(keyword)) {
-                return false;
+                return new VerificationResponse(false, this.getClass().getSimpleName());
             }
         }
-        return true;
+        return new VerificationResponse(true, "");
     }
-
 }
-
-
-

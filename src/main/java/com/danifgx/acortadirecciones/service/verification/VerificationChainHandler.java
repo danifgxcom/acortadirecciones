@@ -13,12 +13,13 @@ public class VerificationChainHandler {
         verifiers.add(verifier);
     }
 
-    public boolean verifyUrl(String url) {
+    public VerificationResponse verifyUrl(String url) {
         for (UrlVerifier verifier : verifiers) {
-            if (!verifier.verify(url)) {
-                return false;
+            VerificationResponse response = verifier.verify(url);
+            if (!response.isSuccess()) {
+                return response;
             }
         }
-        return true;
+        return new VerificationResponse(true, "");
     }
 }
