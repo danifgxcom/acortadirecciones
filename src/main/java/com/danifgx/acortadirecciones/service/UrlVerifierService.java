@@ -11,11 +11,11 @@ public class UrlVerifierService {
     @Value("${base.url}")
     private String baseUrl;
     private final VerificationChainHandler verificationHandler;
-    private final UrlRecordService urlRecordService;
+    private final UrlRecordServiceImpl urlRecordServiceImpl;
 
-    public UrlVerifierService(VerificationChainHandler verificationHandler, UrlRecordService urlRecordService) {
+    public UrlVerifierService(VerificationChainHandler verificationHandler, UrlRecordServiceImpl urlRecordServiceImpl) {
         this.verificationHandler = verificationHandler;
-        this.urlRecordService = urlRecordService;
+        this.urlRecordServiceImpl = urlRecordServiceImpl;
     }
 
     public void verifyUrl(String originalUrl) {

@@ -11,4 +11,3 @@ public interface UrlLogRepository extends MongoRepository<UrlLog, String> {
     Optional<UrlLog> findByOriginalUrl(String originalUrl);
     Optional<UrlLog> findByShortenedUrlId(String shortenedUrlId);
 }
-

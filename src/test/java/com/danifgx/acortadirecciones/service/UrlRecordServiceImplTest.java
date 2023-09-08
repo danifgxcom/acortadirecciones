@@ -8,32 +8,30 @@ import com.danifgx.acortadirecciones.repository.UrlRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessException;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UrlRecordServiceTest {
+class UrlRecordServiceImplTest {
 
     @Mock
     UrlRepository urlRepository;
 
-    @InjectMocks
-    UrlRecordService urlRecordService;
+    UrlRecordServiceImpl urlRecordServiceImpl;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(urlRecordService, "maxUrlLength", 500);
+        int maxUrlLength = 500;
+        urlRecordServiceImpl = new UrlRecordServiceImpl(urlRepository, maxUrlLength);
     }
+
 
     @Test
     void testCreateUrlRecord() {
@@ -46,8 +44,8 @@ class UrlRecordServiceTest {
         when(urlRepository.save(any(Url.class))).thenReturn(url);
 
         assertDoesNotThrow(() -> {
-            String result = urlRecordService.createUrlRecord(originalUrl, baseUrl, id, 2);
-            assertEquals(baseUrl + id, result);
+            Url result = urlRecordServiceImpl.createUrlRecord(originalUrl, baseUrl, id, 2);
+            assertEquals(url, result);
         });
     }
 
@@ -64,7 +62,7 @@ class UrlRecordServiceTest {
 
         when(urlRepository.findByShortenedUrlId(anyString())).thenReturn(Optional.of(mockUrl));
 
-        String result = urlRecordService.retrieveOriginalUrl("randomId1234");
+        String result = urlRecordServiceImpl.retrieveOriginalUrl("randomId1234");
 
         assertEquals("https://www.example.com", result);
     }
@@ -73,7 +71,7 @@ class UrlRecordServiceTest {
     void testRetrieveOriginalUrlNotFound() {
         when(urlRepository.findByShortenedUrlId("nonExistentId")).thenReturn(Optional.empty());
 
-        assertThrows(UrlNotFoundException.class, () -> urlRecordService.retrieveOriginalUrl("nonExistentId"));
+        assertThrows(UrlNotFoundException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("nonExistentId"));
     }
 
     @Test
@@ -82,7 +80,7 @@ class UrlRecordServiceTest {
         url.setExpiryDate(LocalDateTime.now().minusHours(1));
         when(urlRepository.findByShortenedUrlId("expiredId")).thenReturn(Optional.of(url));
 
-        assertThrows(UrlExpiredException.class, () -> urlRecordService.retrieveOriginalUrl("expiredId"));
+        assertThrows(UrlExpiredException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("expiredId"));
     }
 
     @Test
@@ -94,7 +92,7 @@ class UrlRecordServiceTest {
         when(urlRepository.save(any(Url.class))).thenThrow(new DataAccessException("Database connection error") {
         });
 
-        assertThrows(DataAccessException.class, () -> urlRecordService.createUrlRecord(validUrl, baseUrl, id, 2));
+        assertThrows(DataAccessException.class, () -> urlRecordServiceImpl.createUrlRecord(validUrl, baseUrl, id, 2));
     }
 
     @Test
@@ -102,7 +100,7 @@ class UrlRecordServiceTest {
         when(urlRepository.findByShortenedUrlId(anyString())).thenThrow(new DataAccessException("Database connection error") {
         });
 
-        assertThrows(DataAccessException.class, () -> urlRecordService.retrieveOriginalUrl("randomId1234"));
+        assertThrows(DataAccessException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("randomId1234"));
     }
 
     @Test
@@ -111,7 +109,7 @@ class UrlRecordServiceTest {
         String baseUrl = "http://short.url/";
         String id = "randomId1234";
 
-        assertThrows(UrlProcessingException.class, () -> urlRecordService.createUrlRecord(invalidUrl, baseUrl, id, 2));
+        assertThrows(UrlProcessingException.class, () -> urlRecordServiceImpl.createUrlRecord(invalidUrl, baseUrl, id, 2));
     }
 
     @Test
@@ -120,7 +118,7 @@ class UrlRecordServiceTest {
         String baseUrl = "http://short.url/";
         String id = "randomId1234";
 
-        assertThrows(UrlProcessingException.class, () -> urlRecordService.createUrlRecord(tooLongUrl, baseUrl, id, 2));
+        assertThrows(UrlProcessingException.class, () -> urlRecordServiceImpl.createUrlRecord(tooLongUrl, baseUrl, id, 2));
     }
     @Test
     void testPurgeExpiredUrls() {
@@ -136,7 +134,7 @@ class UrlRecordServiceTest {
                 .creationDate(LocalDateTime.now())
                 .originalUrl("https://www.valid.com").build();
 
-        urlRecordService.purgeExpiredUrls();
+        urlRecordServiceImpl.purgeExpiredUrls();
         verify(urlRepository).deleteAll(anyList());
         verify(urlRepository, times(0)).delete(validUrl);
     }

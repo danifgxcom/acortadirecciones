@@ -1,7 +1,6 @@
 package com.danifgx.acortadirecciones.repository;
 
 import com.danifgx.acortadirecciones.entity.Url;
-import com.danifgx.acortadirecciones.entity.UrlLog;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

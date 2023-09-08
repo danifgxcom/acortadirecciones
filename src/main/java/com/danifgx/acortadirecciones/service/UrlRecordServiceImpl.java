@@ -5,6 +5,7 @@ import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.repository.UrlRepository;
+import com.danifgx.acortadirecciones.service.iface.UrlRecordService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,40 +15,26 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class UrlRecordService {
+public class UrlRecordServiceImpl implements UrlRecordService {
 
     private final UrlRepository urlRepository;
-    @Value("${base.url}")
-    private String baseUrl;
-    @Value("${url.max.length}")
-    private int maxUrlLength;
+    private final int maxUrlLength;
 
-    public UrlRecordService(UrlRepository urlRepository) {
+    public UrlRecordServiceImpl(UrlRepository urlRepository,
+                                @Value("${url.max.length}") int maxUrlLength) {
         this.urlRepository = urlRepository;
+        this.maxUrlLength = maxUrlLength;
     }
 
-    public String createUrlRecord(String originalUrl, String baseUrl, String id, int expirationHours) throws UrlProcessingException {
 
+    @Override
+    public Url createUrlRecord(String originalUrl, String baseUrl, String id, int expirationHours) throws UrlProcessingException {
         validateUrl(originalUrl);
+        checkUrlLength(originalUrl);
 
-        if(originalUrl.length() > maxUrlLength) {
-            throw new UrlProcessingException("URL exceeds the maximum allowed length");
-        }
-
-
-        LocalDateTime now = LocalDateTime.now();
-        Url url = Url.builder()
-                .originalUrl(originalUrl)
-                .shortenedBaseUrl(baseUrl)
-                .shortenedUrlId(id)
-                .creationDate(now)
-                .expiryDate(now.plusHours(expirationHours))
-                .build();
-
-        Url savedUrl = urlRepository.save(url);
-        return baseUrl + id;
+        Url newUrl = buildNewUrl(originalUrl, baseUrl, id, expirationHours);
+        return saveUrl(newUrl);
     }
-
 
     public String retrieveOriginalUrl(String shortenedUrlId) {
         Url url = urlRepository.findByShortenedUrlId(shortenedUrlId).orElseThrow(() -> new UrlNotFoundException(shortenedUrlId));
@@ -58,9 +45,31 @@ public class UrlRecordService {
         return url.getOriginalUrl();
     }
 
+    @Override
     public void purgeExpiredUrls() {
         List<Url> expiredUrls = urlRepository.findByExpiryDateBefore(LocalDateTime.now());
         urlRepository.deleteAll(expiredUrls);
+    }
+
+    private Url buildNewUrl(String originalUrl, String baseUrl, String id, int expirationHours) {
+        LocalDateTime now = LocalDateTime.now();
+        return Url.builder()
+                .originalUrl(originalUrl)
+                .shortenedBaseUrl(baseUrl)
+                .shortenedUrlId(id)
+                .creationDate(now)
+                .expiryDate(now.plusHours(expirationHours))
+                .build();
+    }
+
+    private Url saveUrl(Url url) {
+        return urlRepository.save(url);
+    }
+
+    private void checkUrlLength(String originalUrl) throws UrlProcessingException {
+        if (originalUrl.length() > maxUrlLength) {
+            throw new UrlProcessingException("URL exceeds the maximum allowed length");
+        }
     }
 
     private void validateUrl(String originalUrl) throws UrlProcessingException {
