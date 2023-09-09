@@ -35,6 +35,7 @@ public class UrlLogServiceImpl implements UrlLogService {
                 .createdBy(this.getClass().toString())
                 .build();
 
+        this.urlLogRepository.save(urlLog);
     }
 
     @Override

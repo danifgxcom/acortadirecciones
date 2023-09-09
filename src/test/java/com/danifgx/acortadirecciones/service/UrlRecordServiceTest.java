@@ -3,9 +3,8 @@ package com.danifgx.acortadirecciones.service;
 import com.danifgx.acortadirecciones.entity.Url;
 import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
-import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.repository.UrlRepository;
-import com.danifgx.acortadirecciones.service.validation.UrlValidator;
+import com.danifgx.acortadirecciones.service.validation.UrlValidatorImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,15 +29,14 @@ class UrlRecordServiceTest {
     MongoTemplate mongoTemplate;
 
     @Mock
-    UrlValidator urlValidator;
+    UrlValidatorImpl urlValidatorImpl;
 
     UrlRecordServiceImpl urlRecordServiceImpl;
 
     @BeforeEach
     void setUp() {
-        urlRecordServiceImpl = new UrlRecordServiceImpl(urlRepository, mongoTemplate, urlValidator);
+        urlRecordServiceImpl = new UrlRecordServiceImpl(urlRepository, mongoTemplate);
     }
-
 
     @Test
     void testCreateUrlRecord() {
@@ -48,7 +46,6 @@ class UrlRecordServiceTest {
         String baseUrl = "http://short.url/";
         String id = "randomId1234";
 
-        when(urlValidator.validateUrl(anyString())).thenReturn(true);
         when(urlRepository.save(any(Url.class))).thenReturn(url);
 
 
@@ -111,7 +108,6 @@ class UrlRecordServiceTest {
                 .shortenedUrlId("randomId1234")
                 .build();
 
-        when(urlValidator.validateUrl(any())).thenReturn(true);
         when(urlRepository.save(any(Url.class))).thenThrow(new DataAccessException("Database connection error") {
         });
 
@@ -124,29 +120,6 @@ class UrlRecordServiceTest {
         });
 
         assertThrows(DataAccessException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("randomId1234"));
-    }
-
-    @Test
-    void testInvalidUrlOnCreation() {
-
-        Url invalidUrl = Url.builder()
-                .originalUrl("invalid-url")
-                .shortenedBaseUrl("http://short.url/")
-                .shortenedUrlId("randomId1234")
-                .build();
-
-        assertThrows(UrlProcessingException.class, () -> urlRecordServiceImpl.createUrlRecord(invalidUrl));
-    }
-
-    @Test
-    void testUrlExceedsMaxLengthOnCreation() {
-        Url tooLongUrl = Url.builder()
-                .originalUrl("http://example.com/" + "a".repeat(2000))
-                .shortenedBaseUrl("http://short.url/")
-                .shortenedUrlId("randomId1234")
-                .build();
-
-        assertThrows(UrlProcessingException.class, () -> urlRecordServiceImpl.createUrlRecord(tooLongUrl));
     }
 
     @Test

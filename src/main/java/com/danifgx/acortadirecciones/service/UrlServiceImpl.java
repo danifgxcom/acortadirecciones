@@ -5,6 +5,8 @@ import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.service.iface.UrlLogService;
 import com.danifgx.acortadirecciones.service.iface.UrlService;
 import com.danifgx.acortadirecciones.service.iface.UtilsService;
+import com.danifgx.acortadirecciones.service.validation.UrlValidatorImpl;
+import com.danifgx.acortadirecciones.service.verification.UrlVerifierServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,27 +23,24 @@ public class UrlServiceImpl implements UrlService {
 
     private final UtilsService utilsService;
     private final UrlRecordServiceImpl urlRecordServiceImpl;
-    private final UrlVerifierService urlVerifierService;
+    private final UrlVerifierServiceImpl urlVerifierServiceImpl;
     private final UrlLogService urlLogService;
+    private final UrlValidatorImpl urlValidatorImpl;
     @Value("${base.url}")
     @Setter
     private String baseUrl;
 
     @Transactional
-    public String shortenUrl(String originalUrl, int expirationHours, int length) throws UrlProcessingException {
-        try {
-            urlVerifierService.verifyUrl(originalUrl);
+    public String shortenUrl(String originalUrl, int expirationHours, int length){
 
-            String id = generateUniqueId(length);
-            createAndLogNewUrlRecord(originalUrl, id, expirationHours);
+        validateAndVerifyUrl(originalUrl);
 
-            return utilsService.generateShortUrl(baseUrl, id);
-        } catch (UrlProcessingException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new UrlProcessingException("Error processing the URL: " + originalUrl, e);
-        }
+        String id = generateUniqueId(length);
+        createAndLogNewUrlRecord(originalUrl, id, expirationHours);
+
+        return utilsService.generateShortUrl(baseUrl, id);
     }
+
 
     public String getOriginalUrl(String shortenedUrlId) {
         return urlRecordServiceImpl.retrieveOriginalUrl(shortenedUrlId);
@@ -70,6 +69,14 @@ public class UrlServiceImpl implements UrlService {
         return urlRecordServiceImpl.createUrlRecord(url, collectionName);
     }
 
+
+    private void validateAndVerifyUrl(String url) {
+        if (!urlValidatorImpl.validateUrl(url)) {
+            throw new UrlProcessingException("The URL is malformed");
+        }
+
+        urlVerifierServiceImpl.verifyUrl(url);
+    }
 
     private void createAndLogNewUrlRecord(String originalUrl, String id, int expirationHours) {
         Url url = buildNewUrl(originalUrl, baseUrl, id, expirationHours);

@@ -6,7 +6,6 @@ import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.repository.UrlRepository;
 import com.danifgx.acortadirecciones.service.iface.UrlRecordService;
-import com.danifgx.acortadirecciones.service.validation.UrlValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -19,32 +18,21 @@ public class UrlRecordServiceImpl implements UrlRecordService {
 
     private final UrlRepository urlRepository;
     private final MongoTemplate mongoTemplate;
-    private final UrlValidator urlValidator;
 
     @Autowired
-    public UrlRecordServiceImpl(UrlRepository urlRepository, MongoTemplate mongoTemplate, UrlValidator urlValidator) {
+    public UrlRecordServiceImpl(UrlRepository urlRepository, MongoTemplate mongoTemplate) {
         this.urlRepository = urlRepository;
         this.mongoTemplate = mongoTemplate;
-        this.urlValidator = urlValidator;
     }
-
 
     @Override
     public Url createUrlRecord(Url url) throws UrlProcessingException {
-        if (urlValidator.validateUrl(url.getOriginalUrl()))
-            return saveUrl(url);
-        else {
-            throw new UrlProcessingException("Unable to save URL");
-        }
+        return saveUrl(url);
     }
 
     @Override
     public Url createUrlRecord(Url url, String collectionName) throws UrlProcessingException {
-        if (urlValidator.validateUrl(url.getOriginalUrl())) {
-            return mongoTemplate.save(url, collectionName);
-        } else {
-            throw new UrlProcessingException("Unable to save URL");
-        }
+        return mongoTemplate.save(url, collectionName);
     }
 
     public String retrieveOriginalUrl(String shortenedUrlId) throws UrlExpiredException, UrlNotFoundException {

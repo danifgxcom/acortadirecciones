@@ -6,7 +6,8 @@ import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.repository.UrlRepository;
 import com.danifgx.acortadirecciones.service.iface.UrlLogService;
-import com.danifgx.acortadirecciones.service.validation.UrlValidator;
+import com.danifgx.acortadirecciones.service.validation.UrlValidatorImpl;
+import com.danifgx.acortadirecciones.service.verification.UrlVerifierServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,13 +32,13 @@ class UrlServiceImplTest {
     @Mock
     private UrlRecordServiceImpl urlRecordServiceImpl;
     @Mock
-    private UrlVerifierService urlVerifierService;
+    private UrlVerifierServiceImpl urlVerifierServiceImpl;
     @Mock
     private UrlLogService urlLogService;
     @Mock
     private MongoTemplate mongoTemplate;
     @Mock
-    private UrlValidator urlValidator;
+    private UrlValidatorImpl urlValidatorImpl;
     @Mock
     private UrlRepository urlRepository;
 
@@ -47,7 +48,7 @@ class UrlServiceImplTest {
     }
 
     @Test
-    void testShortenUrl() throws MalformedURLException, UrlProcessingException {
+    void testShortenUrlSuccessfully() throws MalformedURLException, UrlProcessingException {
         String originalUrl = "http://example.com";
         int expirationHours = 24;
         int length = 32;
@@ -56,10 +57,11 @@ class UrlServiceImplTest {
         UrlRepository mockUrlRepository = mock(UrlRepository.class);
 
         when(utilsServiceImpl.generateRandomId(length)).thenReturn(id);
+        when(urlValidatorImpl.validateUrl(anyString())).thenReturn(true);
         when(urlRecordServiceImpl.createUrlRecord(any())).thenReturn(mockUrl);
         when(utilsServiceImpl.generateShortUrl(anyString(), anyString())).thenReturn("http://short.url/" + id);
 
-        doNothing().when(urlVerifierService).verifyUrl(anyString());
+        doNothing().when(urlVerifierServiceImpl).verifyUrl(anyString());
 
         try {
             String result = urlServiceImpl.shortenUrl(originalUrl, expirationHours, length);
@@ -78,6 +80,9 @@ class UrlServiceImplTest {
         int length = 32;
         String id = "randomId";
 
+        when(urlValidatorImpl.validateUrl(originalUrl)).thenReturn(true);
+        doNothing().when(urlVerifierServiceImpl).verifyUrl(originalUrl);
+
         when(utilsServiceImpl.generateRandomId(length)).thenReturn(id);
         when(urlRecordServiceImpl.createUrlRecord(any()))
                 .thenThrow(new UrlProcessingException("Simulated exception"));
@@ -86,7 +91,6 @@ class UrlServiceImplTest {
             String result = urlServiceImpl.shortenUrl(originalUrl, expirationHours, length);
             fail("Expected UrlProcessingException to be thrown");
         } catch (UrlProcessingException e) {
-            // The test will pass if this exception is caught
             assertTrue(e.getMessage().contains("Simulated exception"));
         }
     }
@@ -137,6 +141,7 @@ class UrlServiceImplTest {
 
         when(utilsServiceImpl.generateRandomId(length)).thenReturn(uuid32);
         when(urlRecordServiceImpl.createUrlRecord(any())).thenReturn(mockUrl);
+        when(urlValidatorImpl.validateUrl(anyString())).thenReturn(true);
         when(utilsServiceImpl.generateShortUrl(baseUrl, uuid32)).thenReturn(baseUrl + uuid32);
 
         String shortUrl = urlServiceImpl.shortenUrl(longUrl, expirationHours, length);
