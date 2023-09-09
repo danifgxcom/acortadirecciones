@@ -6,10 +6,13 @@ import com.danifgx.acortadirecciones.service.iface.UrlLogService;
 import com.danifgx.acortadirecciones.service.iface.UrlService;
 import com.danifgx.acortadirecciones.service.iface.UtilsService;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @Slf4j
@@ -21,6 +24,7 @@ public class UrlServiceImpl implements UrlService {
     private final UrlVerifierService urlVerifierService;
     private final UrlLogService urlLogService;
     @Value("${base.url}")
+    @Setter
     private String baseUrl;
 
     @Transactional
@@ -61,10 +65,27 @@ public class UrlServiceImpl implements UrlService {
         }
         return id;
     }
+    @Override
+    public Url saveUrlRecord(Url url, String collectionName) {
+        return urlRecordServiceImpl.createUrlRecord(url, collectionName);
+    }
+
 
     private void createAndLogNewUrlRecord(String originalUrl, String id, int expirationHours) {
-        Url newUrlRecord = urlRecordServiceImpl.createUrlRecord(originalUrl, baseUrl, id, expirationHours);
+        Url url = buildNewUrl(originalUrl, baseUrl, id, expirationHours);
+        Url newUrlRecord = urlRecordServiceImpl.createUrlRecord(url);
         log.debug("Repository insertion: {}", newUrlRecord);
         urlLogService.logUrlCreation(newUrlRecord);
+    }
+
+    private Url buildNewUrl(String originalUrl, String baseUrl, String id, int expirationHours) {
+        LocalDateTime now = LocalDateTime.now();
+        return Url.builder()
+                .originalUrl(originalUrl)
+                .shortenedBaseUrl(baseUrl)
+                .shortenedUrlId(id)
+                .creationDate(now)
+                .expiryDate(now.plusHours(expirationHours))
+                .build();
     }
 }

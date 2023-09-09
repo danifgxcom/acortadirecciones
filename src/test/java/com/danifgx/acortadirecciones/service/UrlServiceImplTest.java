@@ -6,42 +6,44 @@ import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.repository.UrlRepository;
 import com.danifgx.acortadirecciones.service.iface.UrlLogService;
+import com.danifgx.acortadirecciones.service.validation.UrlValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.net.MalformedURLException;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class UrlServiceImplTest {
-
     @InjectMocks
     private UrlServiceImpl urlServiceImpl;
 
     @Mock
     private UtilsServiceImpl utilsServiceImpl;
-
     @Mock
     private UrlRecordServiceImpl urlRecordServiceImpl;
-
     @Mock
     private UrlVerifierService urlVerifierService;
     @Mock
-    private Url mockUrl;
-
-    @Mock
     private UrlLogService urlLogService;
+    @Mock
+    private MongoTemplate mongoTemplate;
+    @Mock
+    private UrlValidator urlValidator;
+    @Mock
+    private UrlRepository urlRepository;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        ReflectionTestUtils.setField(urlServiceImpl, "baseUrl", "http://short.url/");
-        ReflectionTestUtils.setField(urlServiceImpl, "urlLogService", urlLogService); // set the mock
+    public void setUp() {
+        urlServiceImpl.setBaseUrl("http://short.url/");
     }
 
     @Test
@@ -54,13 +56,7 @@ class UrlServiceImplTest {
         UrlRepository mockUrlRepository = mock(UrlRepository.class);
 
         when(utilsServiceImpl.generateRandomId(length)).thenReturn(id);
-        when(mockUrl.getId()).thenReturn("someId");
-        when(mockUrl.getOriginalUrl()).thenReturn(originalUrl);
-        when(mockUrl.getShortenedUrlId()).thenReturn(id);
-        when(mockUrl.getShortenedBaseUrl()).thenReturn("http://short.url");
-
-        when(mockUrlRepository.save(any(Url.class))).thenReturn(mockUrl);
-        when(urlRecordServiceImpl.createUrlRecord(anyString(), anyString(), anyString(), anyInt())).thenReturn(mockUrl);
+        when(urlRecordServiceImpl.createUrlRecord(any())).thenReturn(mockUrl);
         when(utilsServiceImpl.generateShortUrl(anyString(), anyString())).thenReturn("http://short.url/" + id);
 
         doNothing().when(urlVerifierService).verifyUrl(anyString());
@@ -83,7 +79,7 @@ class UrlServiceImplTest {
         String id = "randomId";
 
         when(utilsServiceImpl.generateRandomId(length)).thenReturn(id);
-        when(urlRecordServiceImpl.createUrlRecord(anyString(), anyString(), anyString(), anyInt()))
+        when(urlRecordServiceImpl.createUrlRecord(any()))
                 .thenThrow(new UrlProcessingException("Simulated exception"));
 
         try {
@@ -109,10 +105,13 @@ class UrlServiceImplTest {
     @Test
     void testGetOriginalUrl_UrlNotFound() {
         String id = "randomId";
-        when(urlRecordServiceImpl.retrieveOriginalUrl(id)).thenThrow(new UrlNotFoundException(id));
+
+        when(urlRecordServiceImpl.retrieveOriginalUrl(any())).thenThrow(new UrlNotFoundException("URL not found"));
+
 
         assertThrows(UrlNotFoundException.class, () -> urlServiceImpl.getOriginalUrl(id));
     }
+
 
     @Test
     void testGetOriginalUrl_UrlExpired() {
@@ -136,16 +135,41 @@ class UrlServiceImplTest {
                 .shortenedBaseUrl(baseUrl)
                 .build();
 
-        // When
         when(utilsServiceImpl.generateRandomId(length)).thenReturn(uuid32);
-        when(urlRecordServiceImpl.createUrlRecord(longUrl, baseUrl, uuid32, expirationHours)).thenReturn(mockUrl);
+        when(urlRecordServiceImpl.createUrlRecord(any())).thenReturn(mockUrl);
         when(utilsServiceImpl.generateShortUrl(baseUrl, uuid32)).thenReturn(baseUrl + uuid32);
 
-        // Then
         String shortUrl = urlServiceImpl.shortenUrl(longUrl, expirationHours, length);
         assertNotNull(shortUrl);
         assertEquals(length, shortUrl.replace(baseUrl, "").length());
     }
 
+    @Test
+    void testCreateAndSaveUrlWithDynamicCollection() {
+        // Given
+        String originalUrl = "https://www.example.com";
+        String baseUrl = "http://short.url/";
+        String id = "randomId1234";
+        String collectionName = "urls_16";
+
+        Url urlToBeSaved = Url.builder()
+                .id(id)
+                .originalUrl(originalUrl)
+                .shortenedBaseUrl(baseUrl)
+                .shortenedUrlId("randomId")
+                .creationDate(LocalDateTime.now())
+                .expiryDate(LocalDateTime.now().plusHours(2))
+                .build();
+
+        when(urlRecordServiceImpl.createUrlRecord(urlToBeSaved, collectionName)).thenReturn(urlToBeSaved);
+
+        // When
+        Url result = urlServiceImpl.saveUrlRecord(urlToBeSaved, collectionName);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(urlToBeSaved, result);
+        verify(urlRecordServiceImpl, times(1)).createUrlRecord(urlToBeSaved, collectionName);
+    }
 
 }

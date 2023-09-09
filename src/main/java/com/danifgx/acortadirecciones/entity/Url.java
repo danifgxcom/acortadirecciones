@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document(collection = "urls")
+@Document
 @EqualsAndHashCode (exclude = {"creationDAte", "expiryDate"})
 public class Url {
 
