@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class VerificationResponse {
     private boolean success;
-    private String failedVerifier;
+    private String name;
 
 }

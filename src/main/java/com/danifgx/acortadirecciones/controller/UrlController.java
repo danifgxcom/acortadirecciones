@@ -1,7 +1,7 @@
 package com.danifgx.acortadirecciones.controller;
 
-import com.danifgx.acortadirecciones.dao.UrlRequest;
-import com.danifgx.acortadirecciones.service.iface.UrlService;
+import com.danifgx.acortadirecciones.dto.request.UrlRequest;
+import com.danifgx.acortadirecciones.service.UrlService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;

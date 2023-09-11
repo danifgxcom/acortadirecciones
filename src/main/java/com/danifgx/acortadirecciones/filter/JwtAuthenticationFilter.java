@@ -2,8 +2,8 @@ package com.danifgx.acortadirecciones.filter;
 
 import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.repository.UserRepository;
-import com.danifgx.acortadirecciones.service.CustomOidcUserService;
-import com.danifgx.acortadirecciones.service.JwtServiceImpl;
+import com.danifgx.acortadirecciones.service.impl.CustomOidcUserService;
+import com.danifgx.acortadirecciones.service.impl.JwtServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

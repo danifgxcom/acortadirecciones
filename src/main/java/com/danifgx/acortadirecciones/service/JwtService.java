@@ -1,0 +1,12 @@
+package com.danifgx.acortadirecciones.service;
+
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+
+public interface JwtService {
+    String generateToken(OidcUser oidcUser);
+    String generateToken(UserDetails userDetails);
+    Boolean validateToken(String token, String username);
+    UserDetails parseToken(String token);
+    String extractUsername(String token);
+}

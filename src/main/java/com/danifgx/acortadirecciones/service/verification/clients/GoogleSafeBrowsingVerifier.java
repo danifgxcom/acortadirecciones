@@ -1,11 +1,10 @@
 package com.danifgx.acortadirecciones.service.verification.clients;
 
 import com.danifgx.acortadirecciones.service.verification.VerificationResponse;
+import com.danifgx.acortadirecciones.service.verification.clients.google.*;
 import com.danifgx.acortadirecciones.service.verification.iface.UrlVerifier;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,11 @@ import java.util.List;
 public class GoogleSafeBrowsingVerifier implements UrlVerifier {
 
     private static final List<String> allThreatTypes = Arrays.asList("MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION");
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    private final ResponseEvaluator responseEvaluator;
+
+    private final ApiCaller apiCaller;
+
     @Value("${google.safebrowsing.api-key}")
     private String apiKey;
     @Value("${google.safebrowsing.client-id}")
@@ -29,43 +32,21 @@ public class GoogleSafeBrowsingVerifier implements UrlVerifier {
     @Value("${google.safebrowsing.endpoint}")
     private String endpoint;
 
+    @Autowired
+    public GoogleSafeBrowsingVerifier(RestTemplate restTemplate, ResponseEvaluator responseEvaluator, ApiCaller apiCaller) {
+        this.apiCaller = apiCaller;
+        this.restTemplate = restTemplate;
+        this.responseEvaluator = responseEvaluator;
+    }
+
+
     public VerificationResponse verify(String url) {
         log.info("Verifying URL with Google Safe Browsing: {}", url);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        GoogleSafeBrowsingRequest requestPayload = new GoogleSafeBrowsingRequest(
-                new GoogleSafeBrowsingRequest.Client(clientId, clientVersion),
-                new GoogleSafeBrowsingRequest.ThreatInfo(
-                        allThreatTypes,
-                        Arrays.asList("WINDOWS", "LINUX", "OSX", "IOS", "ANDROID", "CHROME"),
-                        Arrays.asList("URL"),
-                        Arrays.asList(new UrlThreatEntry(url))
-                )
-        );
-
-        HttpEntity<GoogleSafeBrowsingRequest> entity = new HttpEntity<>(requestPayload, headers);
+        HttpEntity<GoogleSafeBrowsingRequest> entity = createHttpEntity(url);
 
         try {
-            ResponseEntity<GoogleSafeBrowsingResponse> response = restTemplate.exchange(
-                    endpoint + apiKey,
-                    HttpMethod.POST,
-                    entity,
-                    GoogleSafeBrowsingResponse.class
-            );
-
-            GoogleSafeBrowsingResponse responseBody = response.getBody();
-
-            if (responseBody != null && responseBody.getMatches() != null && !responseBody.getMatches().isEmpty()) {
-                String threatType = responseBody.getMatches().get(0).getThreatType();
-                log.warn("URL verification failed: {}. Threat type: {}", url, threatType);
-                return new VerificationResponse(false, this.getClass().getSimpleName() + " - " + threatType);
-            }
-
-            log.info("URL passed Google Safe Browsing verification: {}", url);
-            return new VerificationResponse(true, "");
-
+            GoogleSafeBrowsingResponse responseBody = apiCaller.makeApiCall(restTemplate, entity, endpoint, apiKey);
+            return responseEvaluator.evaluate(responseBody, url);
         } catch (Exception e) {
             log.error("Error occurred while verifying URL with Google Safe Browsing: {}. Error: {}", url, e.getMessage());
             return new VerificationResponse(false, this.getClass().getSimpleName());
@@ -73,49 +54,38 @@ public class GoogleSafeBrowsingVerifier implements UrlVerifier {
     }
 
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    static class GoogleSafeBrowsingRequest {
-        private Client client;
-        private ThreatInfo threatInfo;
+    private HttpEntity<GoogleSafeBrowsingRequest> createHttpEntity(String url) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        static class Client {
-            private String clientId;
-            private String clientVersion;
-        }
+        GoogleSafeBrowsingRequest requestPayload = new GoogleSafeBrowsingRequest(
+                new Client(clientId, clientVersion),
+                new ThreatInfo(
+                        allThreatTypes,
+                        Arrays.asList("WINDOWS", "LINUX", "OSX", "IOS", "ANDROID", "CHROME"),
+                        Arrays.asList("URL"),
+                        Arrays.asList(new UrlThreatEntry(url))
+                )
+        );
 
-        @Data
-        @AllArgsConstructor
-        static class ThreatInfo {
-            private List<String> threatTypes;
-            private List<String> platformTypes;
-            private List<String> threatEntryTypes;
-            private List<UrlThreatEntry> threatEntries;
-        }
+        return new HttpEntity<>(requestPayload, headers);
     }
-}
 
-@Data
-@AllArgsConstructor
-class UrlThreatEntry {
-    private String url;
-}
+    private GoogleSafeBrowsingResponse makeApiCall(HttpEntity<GoogleSafeBrowsingRequest> entity) {
+        ResponseEntity<GoogleSafeBrowsingResponse> response = restTemplate.exchange(
+                endpoint + apiKey,
+                HttpMethod.POST,
+                entity,
+                GoogleSafeBrowsingResponse.class
+        );
+        return response.getBody();
+    }
 
-@Data
-class GoogleSafeBrowsingResponse {
-    private List<ThreatMatch> matches;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class ThreatMatch {
-    private String threatType;
-    private String platformType;
-    private String threatEntryType;
-    private UrlThreatEntry threat;
+    public GoogleSafeBrowsingResponse buildGoogleSafeBrowsingResponse() {
+        GoogleSafeBrowsingResponse response = new GoogleSafeBrowsingResponse();
+        ThreatMatch match = new ThreatMatch();
+        match.setThreatType("MALWARE");
+        response.setMatches(List.of(match));
+        return response;
+    }
 }

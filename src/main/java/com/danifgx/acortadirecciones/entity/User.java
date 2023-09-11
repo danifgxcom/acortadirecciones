@@ -1,17 +1,22 @@
 package com.danifgx.acortadirecciones.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Document(collection = "users")
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class User {
     private String id;
     private String email;
-    private String name;
+    private String username;
+    private String password;
     private String source;
+    @Field("roles")
+    private List<String> roles = new ArrayList<>();
 }

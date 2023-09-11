@@ -1,36 +1,41 @@
 package com.danifgx.acortadirecciones.controller;
 
-import com.danifgx.acortadirecciones.service.iface.JwtService;
+import com.danifgx.acortadirecciones.service.JwtService;
+import com.danifgx.acortadirecciones.service.impl.AuthenticationService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
-@Controller
+@RestController
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST})
+@Slf4j
 public class AuthController {
 
-    private final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private final JwtService jwtService;
+    private final AuthenticationService authenticationService;
 
-    private JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    AuthController(JwtService jwtService) {
+
+    AuthController(JwtService jwtService, AuthenticationService authenticationService, AuthenticationManager authenticationManager) {
         this.jwtService = jwtService;
+        this.authenticationService = authenticationService;
+        this.authenticationManager = authenticationManager;
     }
+
 
     @GetMapping("/login")
     public String loginOptions() {
-        logger.info("Accessing login options");
+        log.info("Accessing login options");
         return "loginOptions";
     }
 
@@ -52,9 +57,10 @@ public class AuthController {
 
 
 
+
     @GetMapping("/error")
     public String error() {
-        logger.error("An error page was accessed");
+        log.error("An error page was accessed");
         return "error";
     }
 }

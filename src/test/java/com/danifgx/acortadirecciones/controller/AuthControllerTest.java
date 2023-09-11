@@ -1,6 +1,7 @@
 package com.danifgx.acortadirecciones.controller;
 
-import com.danifgx.acortadirecciones.service.iface.JwtService;
+import com.danifgx.acortadirecciones.service.JwtService;
+import com.danifgx.acortadirecciones.service.impl.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,21 +24,21 @@ public class AuthControllerTest {
 
     @InjectMocks
     private AuthController authController;
-
+    @Mock
+    private AuthenticationManager authenticationManager;
     @Mock
     private JwtService jwtService;
-
     @Mock
     private HttpServletRequest request;
-
     @Mock
     private HttpServletResponse response;
-
     @Mock
     private OidcUser oidcUser;
-
     @Mock
     private Authentication authentication;
+
+    @Mock
+    private AuthenticationService authenticationService;
 
 
     @BeforeEach
@@ -49,7 +51,7 @@ public class AuthControllerTest {
         Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        authController = new AuthController(jwtService);
+        authController = new AuthController(jwtService, authenticationService, authenticationManager);
     }
 
 
@@ -90,6 +92,7 @@ public class AuthControllerTest {
 
         assertEquals("http://localhost:3000/shorten", redirectView.getUrl());
     }
+
     @Test
     public void testError() {
         String expectedViewName = "error";

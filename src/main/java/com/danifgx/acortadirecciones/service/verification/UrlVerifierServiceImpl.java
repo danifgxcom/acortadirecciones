@@ -1,7 +1,7 @@
 package com.danifgx.acortadirecciones.service.verification;
 
 import com.danifgx.acortadirecciones.exception.VerificationFailedException;
-import com.danifgx.acortadirecciones.service.UrlRecordServiceImpl;
+import com.danifgx.acortadirecciones.service.impl.UrlRecordServiceImpl;
 import com.danifgx.acortadirecciones.service.verification.handler.VerificationChainHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class UrlVerifierServiceImpl {
     public void verifyUrl(String originalUrl) {
         VerificationResponse response = verificationHandler.verifyUrl(originalUrl);
         if (!response.isSuccess()) {
-            throw new VerificationFailedException("URL verification failed! Rejected by: " + response.getFailedVerifier());
+            throw new VerificationFailedException("URL verification failed! Rejected by: " + response.getName());
         }
         if (isUrlAlreadyShortened(originalUrl)) {
             throw new VerificationFailedException("The URL is already shortened in our system!");
