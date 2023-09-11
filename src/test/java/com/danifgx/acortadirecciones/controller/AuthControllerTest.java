@@ -1,6 +1,7 @@
 package com.danifgx.acortadirecciones.controller;
 
 import com.danifgx.acortadirecciones.service.JwtService;
+import com.danifgx.acortadirecciones.service.UtilsService;
 import com.danifgx.acortadirecciones.service.impl.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +37,8 @@ public class AuthControllerTest {
     private OidcUser oidcUser;
     @Mock
     private Authentication authentication;
+    @Mock
+    private UtilsService utilsService;
 
     @Mock
     private AuthenticationService authenticationService;
@@ -51,16 +54,9 @@ public class AuthControllerTest {
         Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        authController = new AuthController(jwtService, authenticationService, authenticationManager);
+        authController = new AuthController(jwtService, authenticationService, authenticationManager, utilsService);
     }
 
-
-    @Test
-    public void testLoginOptions() {
-        String expectedViewName = "loginOptions";
-        String actualViewName = authController.loginOptions();
-        assertEquals(expectedViewName, actualViewName);
-    }
 
     @Test
     public void testHome() {
@@ -116,4 +112,5 @@ public class AuthControllerTest {
             return getDetails();
         }
     }
+
 }

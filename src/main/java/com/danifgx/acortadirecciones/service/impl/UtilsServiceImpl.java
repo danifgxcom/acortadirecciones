@@ -1,6 +1,9 @@
 package com.danifgx.acortadirecciones.service.impl;
 
 import com.danifgx.acortadirecciones.service.UtilsService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -36,5 +39,22 @@ public class UtilsServiceImpl implements UtilsService {
     public String extractDomain(String urlString) throws MalformedURLException {
         URL url = new URL(urlString);
         return url.getHost();
+    }
+
+@Override
+    public void invalidateCookie(HttpServletRequest request, HttpServletResponse response, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(cookieName)) {
+                    cookie.setMaxAge(0); // Invalida la cookie estableciendo su tiempo máximo de edad en 0
+                    cookie.setPath("/"); // Importante: asegúrate de que la ruta sea coherente con la ruta donde se estableció la cookie.
+                    cookie.setHttpOnly(true); // Opcional, pero recomendado
+                    cookie.setSecure(true); // Opcional, pero recomendado si la cookie es segura
+                    response.addCookie(cookie); // Agrega la cookie a la respuesta para invalidarla en el cliente
+                    break;
+                }
+            }
+        }
     }
 }

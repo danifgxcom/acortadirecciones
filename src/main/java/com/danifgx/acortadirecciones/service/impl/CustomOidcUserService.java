@@ -4,6 +4,8 @@ import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -16,6 +18,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +37,10 @@ public class CustomOidcUserService extends OidcUserService {
         try {
             String email = oidcUser.getAttribute("email");
             OidcIdToken idToken = userRequest.getIdToken();
+            if (idToken == null) {
+                log.error("idToken is null");
+                throw new OAuth2AuthenticationException(new OAuth2Error("null_id_token", "ID Token is null", null));
+            }
 
             User user = userRepository.findByEmail(email)
                     .orElseGet(() -> userServiceImpl.registerNewUser(email));
@@ -41,13 +48,13 @@ public class CustomOidcUserService extends OidcUserService {
             oidcUser = convertUserToOidcUser(user, idToken);
 
         } catch (Exception e) {
+            log.error(e.getMessage());
             OAuth2Error oauth2Error = new OAuth2Error("processing_user_data_error", "Failed to process user data", null);
             throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString());
         }
 
         return oidcUser;
     }
-
 
     public OidcUser convertUserToOidcUser(User user) {
         return convertUserToOidcUser(user, null);
@@ -56,7 +63,19 @@ public class CustomOidcUserService extends OidcUserService {
     public OidcUser convertUserToOidcUser(User user, OidcIdToken idToken) {
         Map<String, Object> attributes = Collections.singletonMap("email", user.getEmail());
         OidcUserInfo oidcUserInfo = new OidcUserInfo(attributes);
-        Set<OidcUserAuthority> authorities = Collections.singleton(new OidcUserAuthority(idToken, oidcUserInfo));
+
+        if (idToken == null) {
+            log.error("idToken is null, cannot create OidcUserAuthority");
+            throw new OAuth2AuthenticationException(new OAuth2Error("null_id_token", "ID Token is null", null));
+        }
+
+        OidcUserAuthority oidcUserAuthority = new OidcUserAuthority(idToken, oidcUserInfo);
+
+        Set<GrantedAuthority> authorities = new HashSet<>(Collections.singleton(oidcUserAuthority));
+        if (user.getRoles() != null) {
+            user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
+        }
+
         return new DefaultOidcUser(authorities, idToken, oidcUserInfo, "email");
     }
 }

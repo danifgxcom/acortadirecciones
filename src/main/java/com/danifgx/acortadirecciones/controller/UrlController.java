@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "*")
 public class UrlController {
 
     private final Logger logger = LoggerFactory.getLogger(UrlController.class);

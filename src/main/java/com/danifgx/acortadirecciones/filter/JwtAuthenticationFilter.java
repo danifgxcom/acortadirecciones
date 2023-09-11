@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -44,6 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
+
+                    // Here you can get the roles.
+                    List<String> roles = user.getRoles();  // Assuming 'getRoles()' returns a list of roles
+
                     OidcUser oidcUser = oidcUserService.convertUserToOidcUser(user);
 
                     if (jwtService.validateToken(jwt, user.getEmail())) {
@@ -57,5 +62,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
 
 }

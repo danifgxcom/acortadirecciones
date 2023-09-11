@@ -3,6 +3,7 @@ package com.danifgx.acortadirecciones.security;
 import com.danifgx.acortadirecciones.filter.JwtAuthenticationFilter;
 import com.danifgx.acortadirecciones.service.impl.CustomOidcUserService;
 import com.danifgx.acortadirecciones.service.impl.CustomUserDetailsServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfiguration {
 
     private final CustomOidcUserService customOidcUserService;
@@ -59,6 +61,7 @@ public class SecurityConfiguration {
                 new AntPathRequestMatcher("/home"),
                 new AntPathRequestMatcher("/error"),
                 new AntPathRequestMatcher("/login"),
+                new AntPathRequestMatcher("/logoutPage"),
                 new AntPathRequestMatcher("/oauth2/authorization/**"),
                 new AntPathRequestMatcher("/url/**"),
                 new AntPathRequestMatcher("/resolve/**"),
@@ -77,14 +80,23 @@ public class SecurityConfiguration {
                 .oauth2Login(oauth2 -> {
                     oauth2
                             .defaultSuccessUrl("/loggedIn")
-                            .userInfoEndpoint(userInfoEndpoint ->
-                                    userInfoEndpoint.oidcUserService(customOidcUserService))
-                            .loginPage("/login");
+                            .failureUrl("/customErrorPage")
+                            .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.oidcUserService(customOidcUserService));
                 }).formLogin(formLogin -> {
                     formLogin
                             .defaultSuccessUrl("/admin/dashboard", true)
                             .permitAll();
-                });
+                }).logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/logoutPage")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID", "userData", "jwt_token")
+                        .clearAuthentication(true)
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            log.info("Successfully logged out. Redirecting to /logoutPage");
+                            response.sendRedirect("/logoutPage");
+                        })
+                );
 
         return http.build();
     }
