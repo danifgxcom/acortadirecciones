@@ -1,8 +1,7 @@
 package com.danifgx.acortadirecciones.security;
 
 import com.danifgx.acortadirecciones.filter.JwtAuthenticationFilter;
-import com.danifgx.acortadirecciones.service.impl.CustomOidcUserService;
-import com.danifgx.acortadirecciones.service.impl.CustomUserDetailsServiceImpl;
+import com.danifgx.acortadirecciones.service.impl.CustomOidcUserServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +11,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -26,25 +26,25 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 @Slf4j
 public class SecurityConfiguration {
 
-    private final CustomOidcUserService customOidcUserService;
+    private final CustomOidcUserServiceImpl customOidcUserService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    private final CustomUserDetailsServiceImpl customUserDetailsServiceImpl;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public SecurityConfiguration(CustomOidcUserService customOidcUserService,
-                                 JwtAuthenticationFilter jwtAuthenticationFilter, CustomUserDetailsServiceImpl customUserDetailsServiceImpl) {
+    public SecurityConfiguration(CustomOidcUserServiceImpl customOidcUserService,
+                                 JwtAuthenticationFilter jwtAuthenticationFilter, UserDetailsService userDetailsService) {
         this.customOidcUserService = customOidcUserService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.customUserDetailsServiceImpl = customUserDetailsServiceImpl;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, BCryptPasswordEncoder bCryptPasswordEncoder, CustomUserDetailsServiceImpl customUserDetailsServiceImpl)
+    public AuthenticationManager authenticationManager(HttpSecurity http, BCryptPasswordEncoder bCryptPasswordEncoder, UserDetailsService userDetailsService)
             throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder
-                .userDetailsService(customUserDetailsServiceImpl)
+                .userDetailsService(userDetailsService)
                 .passwordEncoder(bCryptPasswordEncoder);
         return authenticationManagerBuilder.build();
     }

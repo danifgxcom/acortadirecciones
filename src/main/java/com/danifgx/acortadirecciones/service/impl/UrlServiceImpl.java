@@ -3,9 +3,10 @@ package com.danifgx.acortadirecciones.service.impl;
 import com.danifgx.acortadirecciones.entity.Url;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
 import com.danifgx.acortadirecciones.service.UrlLogService;
+import com.danifgx.acortadirecciones.service.UrlRecordService;
 import com.danifgx.acortadirecciones.service.UrlService;
 import com.danifgx.acortadirecciones.service.UtilsService;
-import com.danifgx.acortadirecciones.service.validation.UrlValidatorImpl;
+import com.danifgx.acortadirecciones.service.validation.iface.UrlValidator;
 import com.danifgx.acortadirecciones.service.verification.UrlVerifierServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -22,10 +23,10 @@ import java.time.LocalDateTime;
 public class UrlServiceImpl implements UrlService {
 
     private final UtilsService utilsService;
-    private final UrlRecordServiceImpl urlRecordServiceImpl;
+    private final UrlRecordService urlRecordServiceImpl;
     private final UrlVerifierServiceImpl urlVerifierServiceImpl;
     private final UrlLogService urlLogService;
-    private final UrlValidatorImpl urlValidatorImpl;
+    private final UrlValidator urlValidator;
     @Value("${base.url}")
     @Setter
     private String baseUrl;
@@ -71,7 +72,7 @@ public class UrlServiceImpl implements UrlService {
 
 
     private void validateAndVerifyUrl(String url) {
-        if (!urlValidatorImpl.validateUrl(url)) {
+        if (!urlValidator.validateUrl(url)) {
             throw new UrlProcessingException("The URL is malformed");
         }
 

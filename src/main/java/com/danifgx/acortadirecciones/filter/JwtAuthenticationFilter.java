@@ -2,7 +2,7 @@ package com.danifgx.acortadirecciones.filter;
 
 import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.persistence.repository.UserRepository;
-import com.danifgx.acortadirecciones.service.impl.CustomOidcUserService;
+import com.danifgx.acortadirecciones.service.impl.CustomOidcUserServiceImpl;
 import com.danifgx.acortadirecciones.service.impl.JwtServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,7 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtServiceImpl jwtService;
 
     @Autowired
-    private CustomOidcUserService oidcUserService;
+    private CustomOidcUserServiceImpl oidcUserService;
 
     @Autowired
     private UserRepository userRepository;

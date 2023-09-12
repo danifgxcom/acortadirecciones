@@ -3,7 +3,7 @@ package com.danifgx.acortadirecciones.service.impl;
 import com.danifgx.acortadirecciones.entity.Url;
 import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
-import com.danifgx.acortadirecciones.persistence.repository.UrlRepository;
+import com.danifgx.acortadirecciones.persistence.dao.UrlDao;
 import com.danifgx.acortadirecciones.service.validation.UrlValidatorImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class UrlRecordServiceImplTest {
 
     @Mock
-    UrlRepository urlRepository;
+    UrlDao urlDao;
 
     @Mock
     MongoTemplate mongoTemplate;
@@ -35,7 +35,7 @@ class UrlRecordServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        urlRecordServiceImpl = new UrlRecordServiceImpl(urlRepository, mongoTemplate);
+        urlRecordServiceImpl = new UrlRecordServiceImpl(urlDao, mongoTemplate);
     }
 
     @Test
@@ -46,7 +46,7 @@ class UrlRecordServiceImplTest {
         String baseUrl = "http://short.url/";
         String id = "randomId1234";
 
-        when(urlRepository.save(any(Url.class))).thenReturn(url);
+        when(urlDao.save(any(Url.class))).thenReturn(url);
 
 
         Url finalUrl = Url.builder()
@@ -76,7 +76,7 @@ class UrlRecordServiceImplTest {
                 .originalUrl("https://www.example.com")
                 .build();
 
-        when(urlRepository.findByShortenedUrlId(anyString())).thenReturn(Optional.of(mockUrl));
+        when(urlDao.findByShortenedUrlId(anyString())).thenReturn(Optional.of(mockUrl));
 
         String result = urlRecordServiceImpl.retrieveOriginalUrl("randomId1234");
 
@@ -85,7 +85,7 @@ class UrlRecordServiceImplTest {
 
     @Test
     void testRetrieveOriginalUrlNotFound() {
-        when(urlRepository.findByShortenedUrlId("nonExistentId")).thenReturn(Optional.empty());
+        when(urlDao.findByShortenedUrlId("nonExistentId")).thenReturn(Optional.empty());
 
         assertThrows(UrlNotFoundException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("nonExistentId"));
     }
@@ -94,7 +94,7 @@ class UrlRecordServiceImplTest {
     void testRetrieveExpiredUrl() {
         Url url = new Url();
         url.setExpiryDate(LocalDateTime.now().minusHours(1));
-        when(urlRepository.findByShortenedUrlId("expiredId")).thenReturn(Optional.of(url));
+        when(urlDao.findByShortenedUrlId("expiredId")).thenReturn(Optional.of(url));
 
         assertThrows(UrlExpiredException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("expiredId"));
     }
@@ -108,7 +108,7 @@ class UrlRecordServiceImplTest {
                 .shortenedUrlId("randomId1234")
                 .build();
 
-        when(urlRepository.save(any(Url.class))).thenThrow(new DataAccessException("Database connection error") {
+        when(urlDao.save(any(Url.class))).thenThrow(new DataAccessException("Database connection error") {
         });
 
         assertThrows(DataAccessException.class, () -> urlRecordServiceImpl.createUrlRecord(validUrl));
@@ -116,7 +116,7 @@ class UrlRecordServiceImplTest {
 
     @Test
     void testDatabaseErrorOnRetrieveOriginalUrl() {
-        when(urlRepository.findByShortenedUrlId(anyString())).thenThrow(new DataAccessException("Database connection error") {
+        when(urlDao.findByShortenedUrlId(anyString())).thenThrow(new DataAccessException("Database connection error") {
         });
 
         assertThrows(DataAccessException.class, () -> urlRecordServiceImpl.retrieveOriginalUrl("randomId1234"));
@@ -137,9 +137,7 @@ class UrlRecordServiceImplTest {
                 .originalUrl("https://www.valid.com").build();
 
         urlRecordServiceImpl.purgeExpiredUrls();
-        verify(urlRepository).deleteAll(anyList());
-        verify(urlRepository, times(0)).delete(validUrl);
+        verify(urlDao).deleteAll(anyList());
+        verify(urlDao, times(0)).deleteById(validUrl.getId());
     }
-
-
 }

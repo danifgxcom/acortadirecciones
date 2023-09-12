@@ -4,11 +4,11 @@ import com.danifgx.acortadirecciones.entity.UrlLog;
 import com.danifgx.acortadirecciones.persistence.dao.UrlLogDao;
 import com.danifgx.acortadirecciones.persistence.repository.UrlLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Component
+@Repository
 public class UrlLogDaoImpl implements UrlLogDao {
 
     private final UrlLogRepository urlLogRepository;

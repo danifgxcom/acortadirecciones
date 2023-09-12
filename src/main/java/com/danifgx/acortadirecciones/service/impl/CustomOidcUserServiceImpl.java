@@ -25,7 +25,7 @@ import java.util.Set;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CustomOidcUserService extends OidcUserService {
+public class CustomOidcUserServiceImpl extends OidcUserService {
 
     private final UserRepository userRepository;
     private final UserServiceImpl userServiceImpl;

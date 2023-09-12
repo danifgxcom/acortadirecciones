@@ -4,7 +4,7 @@ import com.danifgx.acortadirecciones.entity.Url;
 import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
-import com.danifgx.acortadirecciones.persistence.repository.UrlRepository;
+import com.danifgx.acortadirecciones.persistence.dao.UrlDao;
 import com.danifgx.acortadirecciones.service.UrlRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -16,12 +16,12 @@ import java.util.List;
 @Service
 public class UrlRecordServiceImpl implements UrlRecordService {
 
-    private final UrlRepository urlRepository;
+    private final UrlDao urlDao;
     private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public UrlRecordServiceImpl(UrlRepository urlRepository, MongoTemplate mongoTemplate) {
-        this.urlRepository = urlRepository;
+    public UrlRecordServiceImpl(UrlDao urlDao, MongoTemplate mongoTemplate) {
+        this.urlDao = urlDao;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -36,9 +36,9 @@ public class UrlRecordServiceImpl implements UrlRecordService {
     }
 
     public String retrieveOriginalUrl(String shortenedUrlId) throws UrlExpiredException, UrlNotFoundException {
-        Url url = urlRepository.findByShortenedUrlId(shortenedUrlId).orElseThrow(() -> new UrlNotFoundException(shortenedUrlId));
+        Url url = urlDao.findByShortenedUrlId(shortenedUrlId).orElseThrow(() -> new UrlNotFoundException(shortenedUrlId));
         if (url.getExpiryDate().isBefore(LocalDateTime.now())) {
-            urlRepository.deleteById(shortenedUrlId);
+            urlDao.deleteById(shortenedUrlId);
             throw new UrlExpiredException(shortenedUrlId);
         }
         return url.getOriginalUrl();
@@ -46,11 +46,11 @@ public class UrlRecordServiceImpl implements UrlRecordService {
 
     @Override
     public void purgeExpiredUrls() {
-        List<Url> expiredUrls = urlRepository.findByExpiryDateBefore(LocalDateTime.now());
-        urlRepository.deleteAll(expiredUrls);
+        List<Url> expiredUrls = urlDao.findByExpiryDateBefore(LocalDateTime.now());
+        urlDao.deleteAll(expiredUrls);
     }
 
     private Url saveUrl(Url url) {
-        return urlRepository.save(url);
+        return urlDao.save(url);
     }
 }

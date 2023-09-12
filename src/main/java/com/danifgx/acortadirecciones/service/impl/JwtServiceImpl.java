@@ -1,9 +1,11 @@
 package com.danifgx.acortadirecciones.service.impl;
 
+import com.danifgx.acortadirecciones.service.BlacklistTokenService;
 import com.danifgx.acortadirecciones.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
 
     @Value("${jwt.secret}")
@@ -26,6 +29,8 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${jwt.expiration}")
     private Long expiration;
+
+    private final BlacklistTokenService blacklistTokenService;
 
     @Override
     public String generateToken(OidcUser oidcUser) {
@@ -71,9 +76,15 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public Boolean validateToken(String token, String username) {
+        if (blacklistTokenService.isBlacklisted(token)) {
+            return false;
+        }
+
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
+
+
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);

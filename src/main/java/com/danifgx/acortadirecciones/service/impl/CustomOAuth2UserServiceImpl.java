@@ -16,14 +16,14 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+public class CustomOAuth2UserServiceImpl implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserServiceImpl.class);
 
     private final UserRepository userRepository;
 
     @Autowired
-    CustomOAuth2UserService(UserRepository userRepository) {
+    CustomOAuth2UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
