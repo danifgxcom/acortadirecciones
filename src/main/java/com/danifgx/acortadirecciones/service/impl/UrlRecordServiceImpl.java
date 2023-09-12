@@ -4,7 +4,7 @@ import com.danifgx.acortadirecciones.entity.Url;
 import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
 import com.danifgx.acortadirecciones.exception.UrlProcessingException;
-import com.danifgx.acortadirecciones.repository.UrlRepository;
+import com.danifgx.acortadirecciones.persistence.repository.UrlRepository;
 import com.danifgx.acortadirecciones.service.UrlRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;

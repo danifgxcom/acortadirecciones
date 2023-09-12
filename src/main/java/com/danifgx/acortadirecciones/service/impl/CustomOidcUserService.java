@@ -1,7 +1,7 @@
 package com.danifgx.acortadirecciones.service.impl;
 
 import com.danifgx.acortadirecciones.entity.User;
-import com.danifgx.acortadirecciones.repository.UserRepository;
+import com.danifgx.acortadirecciones.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;

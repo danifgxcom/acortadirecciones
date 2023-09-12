@@ -1,6 +1,7 @@
 package com.danifgx.acortadirecciones.repository;
 
 import com.danifgx.acortadirecciones.entity.User;
+import com.danifgx.acortadirecciones.persistence.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

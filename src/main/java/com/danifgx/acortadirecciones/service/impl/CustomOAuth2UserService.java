@@ -1,7 +1,7 @@
 package com.danifgx.acortadirecciones.service.impl;
 
 import com.danifgx.acortadirecciones.entity.User;
-import com.danifgx.acortadirecciones.repository.UserRepository;
+import com.danifgx.acortadirecciones.persistence.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

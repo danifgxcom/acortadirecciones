@@ -2,7 +2,7 @@ package com.danifgx.acortadirecciones.service.impl;
 
 import com.danifgx.acortadirecciones.entity.CustomUserDetails;
 import com.danifgx.acortadirecciones.entity.User;
-import com.danifgx.acortadirecciones.repository.UserRepository;
+import com.danifgx.acortadirecciones.persistence.repository.UserRepository;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,8 +1,10 @@
 package com.danifgx.acortadirecciones.controller;
 
+import com.danifgx.acortadirecciones.service.AuthenticationService;
+import com.danifgx.acortadirecciones.service.CookieService;
 import com.danifgx.acortadirecciones.service.JwtService;
 import com.danifgx.acortadirecciones.service.UtilsService;
-import com.danifgx.acortadirecciones.service.impl.AuthenticationService;
+import com.danifgx.acortadirecciones.service.impl.CookieServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -22,7 +24,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,56 +33,30 @@ public class AuthController {
 
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;
-
     private final AuthenticationManager authenticationManager;
-
     private final UtilsService utilsService;
+    private final CookieService cookieService;
+    private final ObjectMapper objectMapper;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-
-    AuthController(JwtService jwtService, AuthenticationService authenticationService, AuthenticationManager authenticationManager, UtilsService utilsService) {
+    public AuthController(JwtService jwtService, AuthenticationService authenticationService,
+                          AuthenticationManager authenticationManager, UtilsService utilsService,
+                          CookieServiceImpl cookieService, ObjectMapper objectMapper) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
         this.authenticationManager = authenticationManager;
         this.utilsService = utilsService;
+        this.cookieService = cookieService;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping("/loggedIn")
     public RedirectView loggedHome(HttpServletRequest request, HttpServletResponse response) {
         OidcUser oidcUser = (OidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String jwtToken = jwtService.generateToken(oidcUser);
-
-        Cookie jwtCookie = new Cookie("jwt_token", jwtToken);
-        response.addCookie(jwtCookie);
-
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("email", oidcUser.getEmail());
-        userData.put("username", oidcUser.getName());
-        List<String> roles = oidcUser.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-        String rolesString = String.join(", ", roles);
-        userData.put("role", rolesString);
-        userData.put("lastRequest", LocalDateTime.now().toString());
-
-        try {
-            String jsonUserData = objectMapper.writeValueAsString(userData);
-            String encodedJsonUserData = URLEncoder.encode(jsonUserData, StandardCharsets.UTF_8.toString()); // encode the JSON string
-            Cookie userDataCookie = new Cookie("userData", encodedJsonUserData);
-            userDataCookie.setHttpOnly(false);
-            userDataCookie.setSecure(false); // Enable in production
-            userDataCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
-            response.addCookie(userDataCookie);
-        } catch (JsonProcessingException e) {
-            log.error("Exception found when using Google OIDC: {}", e.getMessage());
-        } catch (UnsupportedEncodingException e) {
-            log.error("Encoding exception: {}", e.getMessage());
-        }
-
+        cookieService.setJwtCookie(response, jwtToken);
+        cookieService.setUserDataCookie(response, oidcUser);
         return new RedirectView("http://localhost:3000/shorten");
     }
-
 
     @GetMapping("/logoutPage")
     public String showLogoutPage() {
@@ -92,5 +67,44 @@ public class AuthController {
     public String error() {
         log.error("An error page was accessed");
         return "error";
+    }
+
+    private void setCookies(HttpServletResponse response, OidcUser oidcUser, String jwtToken) {
+        setJwtCookie(response, jwtToken);
+        setUserDataCookie(response, collectUserData(oidcUser));
+    }
+
+    private void setJwtCookie(HttpServletResponse response, String jwtToken) {
+        Cookie jwtCookie = new Cookie("jwt_token", jwtToken);
+        response.addCookie(jwtCookie);
+    }
+
+    private void setUserDataCookie(HttpServletResponse response, Map<String, Object> userData) {
+        try {
+            String jsonUserData = objectMapper.writeValueAsString(userData);
+            String encodedJsonUserData = URLEncoder.encode(jsonUserData, StandardCharsets.UTF_8.toString());
+            Cookie userDataCookie = new Cookie("userData", encodedJsonUserData);
+            userDataCookie.setHttpOnly(false);
+            userDataCookie.setSecure(false);
+            userDataCookie.setMaxAge(7 * 24 * 60 * 60);
+            response.addCookie(userDataCookie);
+        } catch (JsonProcessingException | UnsupportedEncodingException e) {
+            log.error("Exception: {}", e.getMessage());
+        }
+    }
+
+    private Map<String, Object> collectUserData(OidcUser oidcUser) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("email", oidcUser.getEmail());
+        userData.put("username", oidcUser.getName());
+        userData.put("role", collectRoles(oidcUser));
+        userData.put("lastRequest", LocalDateTime.now().toString());
+        return userData;
+    }
+
+    private String collectRoles(OidcUser oidcUser) {
+        return oidcUser.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(", "));
     }
 }

@@ -3,8 +3,7 @@ package com.danifgx.acortadirecciones.service.impl;
 import com.danifgx.acortadirecciones.entity.Url;
 import com.danifgx.acortadirecciones.exception.UrlExpiredException;
 import com.danifgx.acortadirecciones.exception.UrlNotFoundException;
-import com.danifgx.acortadirecciones.repository.UrlRepository;
-import com.danifgx.acortadirecciones.service.impl.UrlRecordServiceImpl;
+import com.danifgx.acortadirecciones.persistence.repository.UrlRepository;
 import com.danifgx.acortadirecciones.service.validation.UrlValidatorImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UrlRecordServiceTest {
+class UrlRecordServiceImplTest {
 
     @Mock
     UrlRepository urlRepository;

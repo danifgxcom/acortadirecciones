@@ -1,4 +1,4 @@
-package com.danifgx.acortadirecciones.dto.request.response;
+package com.danifgx.acortadirecciones.dto.response;
 
 public class JwtResponse {
     private final String jwtToken;

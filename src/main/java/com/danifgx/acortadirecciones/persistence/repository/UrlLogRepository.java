@@ -1,4 +1,4 @@
-package com.danifgx.acortadirecciones.repository;
+package com.danifgx.acortadirecciones.persistence.repository;
 
 import com.danifgx.acortadirecciones.entity.UrlLog;
 import org.springframework.data.mongodb.repository.MongoRepository;

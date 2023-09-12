@@ -3,8 +3,9 @@ package com.danifgx.acortadirecciones.controller;
 import com.danifgx.acortadirecciones.dto.request.LoginRequest;
 import com.danifgx.acortadirecciones.entity.CustomUserDetails;
 import com.danifgx.acortadirecciones.exception.CustomAuthenticationException;
+import com.danifgx.acortadirecciones.service.AuthenticationService;
 import com.danifgx.acortadirecciones.service.JwtService;
-import com.danifgx.acortadirecciones.service.impl.AuthenticationService;
+import com.danifgx.acortadirecciones.service.impl.AuthenticationServiceImpl;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class AdminLoginViewController {
     private final AuthenticationManager authenticationManager;
 
 
-    AdminLoginViewController(JwtService jwtService, AuthenticationService authenticationService, AuthenticationManager authenticationManager) {
+    AdminLoginViewController(JwtService jwtService, AuthenticationServiceImpl authenticationService, AuthenticationManager authenticationManager) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
         this.authenticationManager = authenticationManager;
@@ -36,7 +37,7 @@ public class AdminLoginViewController {
 
     @GetMapping("/admin/login")
     public String loginView() {
-        return "loginOptions"; // nombre de la vista de Thymeleaf que contiene el formulario
+        return "loginOptions";
     }
 
     @PostMapping("/admin/login")
