@@ -16,12 +16,16 @@ public class UrlRequest {
 
     @Value("${url.lengthId.default}")
     private int length;
+    @Value("${url.expirationHours.default}")
+    private int expirationHours;
 
     @AssertTrue(message = "Length must be 8, 16, 24, or 32")
     public boolean isValidLength() {
         return length == 8 || length == 16 || length == 24 || length == 32;
     }
 
-    @Value("${url.expirationHours.default}")
-    private int expirationHours;
+    @AssertTrue(message = "Expiration hours must be 24, 48, or 72")
+    public boolean isValidExpirationHours() {
+        return expirationHours == 24 || expirationHours == 48 || expirationHours == 72;
+    }
 }

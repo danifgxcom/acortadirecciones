@@ -64,18 +64,18 @@ public class CustomOidcUserServiceImpl extends OidcUserService {
         Map<String, Object> attributes = Collections.singletonMap("email", user.getEmail());
         OidcUserInfo oidcUserInfo = new OidcUserInfo(attributes);
 
-        if (idToken == null) {
-            log.error("idToken is null, cannot create OidcUserAuthority");
-            throw new OAuth2AuthenticationException(new OAuth2Error("null_id_token", "ID Token is null", null));
-        }
-
-        OidcUserAuthority oidcUserAuthority = new OidcUserAuthority(idToken, oidcUserInfo);
-
-        Set<GrantedAuthority> authorities = new HashSet<>(Collections.singleton(oidcUserAuthority));
+        Set<GrantedAuthority> authorities = new HashSet<>();
         if (user.getRoles() != null) {
             user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
         }
 
-        return new DefaultOidcUser(authorities, idToken, oidcUserInfo, "email");
+        if (idToken != null) {
+            OidcUserAuthority oidcUserAuthority = new OidcUserAuthority(idToken, oidcUserInfo);
+            authorities.add(oidcUserAuthority);
+            return new DefaultOidcUser(authorities, idToken, oidcUserInfo, "email");
+        } else {
+            return new DefaultOidcUser(authorities, null, "email");
+        }
     }
+
 }

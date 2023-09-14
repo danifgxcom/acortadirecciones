@@ -1,6 +1,7 @@
 package com.danifgx.acortadirecciones.entity;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Document(collection = "blacklistTokens")
 @Data
+@NoArgsConstructor
 public class BlacklistToken {
 
     @Id

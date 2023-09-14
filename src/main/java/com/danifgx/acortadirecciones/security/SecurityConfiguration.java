@@ -65,7 +65,8 @@ public class SecurityConfiguration {
                 new AntPathRequestMatcher("/oauth2/authorization/**"),
                 new AntPathRequestMatcher("/url/**"),
                 new AntPathRequestMatcher("/resolve/**"),
-                new AntPathRequestMatcher("/favicon.ico")
+                new AntPathRequestMatcher("/favicon.ico"),
+                new AntPathRequestMatcher("/option/**")
         );
 
         http
