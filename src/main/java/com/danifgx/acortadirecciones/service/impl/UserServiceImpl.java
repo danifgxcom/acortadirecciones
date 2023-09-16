@@ -4,7 +4,6 @@ import com.danifgx.acortadirecciones.entity.Role;
 import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.persistence.dao.RoleDao;
 import com.danifgx.acortadirecciones.persistence.dao.UserDao;
-import com.danifgx.acortadirecciones.security.profile.Permission;
 import com.danifgx.acortadirecciones.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -55,11 +53,6 @@ public class UserServiceImpl implements UserService {
         userDao.save(user);
     }
 
-
-    @Override
-    public Set<Permission> getUserPermissions(List<String> roleNames) {
-        return null;
-    }
 
     public List<Role> getUserRole(String userId) {
         User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
