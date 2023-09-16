@@ -1,7 +1,9 @@
 package com.danifgx.acortadirecciones.service.impl;
 
+import com.danifgx.acortadirecciones.entity.Role;
 import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.persistence.repository.UserRepository;
+import com.danifgx.acortadirecciones.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,10 +19,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -28,7 +27,7 @@ import java.util.Set;
 public class CustomOidcUserServiceImpl extends OidcUserService {
 
     private final UserRepository userRepository;
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userService;
 
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
@@ -43,7 +42,7 @@ public class CustomOidcUserServiceImpl extends OidcUserService {
             }
 
             User user = userRepository.findByEmail(email)
-                    .orElseGet(() -> userServiceImpl.registerNewUser(email));
+                    .orElseGet(() -> userService.registerNewUser(email));
 
             oidcUser = convertUserToOidcUser(user, idToken);
 
@@ -65,9 +64,14 @@ public class CustomOidcUserServiceImpl extends OidcUserService {
         OidcUserInfo oidcUserInfo = new OidcUserInfo(attributes);
 
         Set<GrantedAuthority> authorities = new HashSet<>();
-        if (user.getRoles() != null) {
-            user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
+
+        List<Role> roles = user.getRoles();
+        if (roles != null) {
+            roles.stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                    .forEach(authorities::add);
         }
+
 
         if (idToken != null) {
             OidcUserAuthority oidcUserAuthority = new OidcUserAuthority(idToken, oidcUserInfo);
@@ -77,5 +81,6 @@ public class CustomOidcUserServiceImpl extends OidcUserService {
             return new DefaultOidcUser(authorities, null, "email");
         }
     }
+
 
 }

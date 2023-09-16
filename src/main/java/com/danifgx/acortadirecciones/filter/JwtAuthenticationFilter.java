@@ -1,7 +1,7 @@
 package com.danifgx.acortadirecciones.filter;
 
+import com.danifgx.acortadirecciones.entity.Role;
 import com.danifgx.acortadirecciones.entity.User;
-import com.danifgx.acortadirecciones.security.profile.Permission;
 import com.danifgx.acortadirecciones.service.JwtService;
 import com.danifgx.acortadirecciones.service.UserService;
 import jakarta.servlet.FilterChain;
@@ -10,17 +10,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,26 +40,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String jwt = authorizationHeader.substring(7);
-
             String email = jwtService.extractUsername(jwt);
+
             if (jwtService.validateToken(jwt, email)) {
                 log.info("JWT Token is valid for email: {}", email);
 
                 Optional<User> optionalUser = userService.findByEmail(email);
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
-                    List<String> roles = user.getRoles();
-                    Set<Permission> userPermissions = userService.getUserPermissions(roles);
-                    List<GrantedAuthority> grantedAuthorities = userPermissions.stream()
-                            .map(permission -> new SimpleGrantedAuthority(permission.name()))
-                            .collect(Collectors.toList());
+                    List<Role> roles = user.getRoles();
+
+                    List<Integer> allUrlLengths = new ArrayList<>();
+                    for (Role role : roles) {
+                        allUrlLengths.addAll(role.getUrlLengths());
+                    }
+
+                    String urlLengthsStr = allUrlLengths.stream()
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(","));
 
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                            user, null, grantedAuthorities);
+                            user, null, new ArrayList<>()
+                    );
 
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authenticationToken.setDetails(urlLengthsStr);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                } else {
+                }
+                else {
                     log.warn("No user found with email: {}", email);
                 }
             } else {

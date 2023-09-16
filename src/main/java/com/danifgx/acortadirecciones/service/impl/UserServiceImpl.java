@@ -1,9 +1,8 @@
 package com.danifgx.acortadirecciones.service.impl;
 
-import com.danifgx.acortadirecciones.entity.RolePermission;
+import com.danifgx.acortadirecciones.entity.Role;
 import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.persistence.dao.RoleDao;
-import com.danifgx.acortadirecciones.persistence.dao.RolePermissionDao;
 import com.danifgx.acortadirecciones.persistence.dao.UserDao;
 import com.danifgx.acortadirecciones.security.profile.Permission;
 import com.danifgx.acortadirecciones.service.UserService;
@@ -11,23 +10,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
-
     private final RoleDao roleDao;
 
-    private final RolePermissionDao rolePermissionDao;
-
     @Autowired
-    public UserServiceImpl(UserDao userDao, RoleDao roleDao, RolePermissionDao rolePermissionDao) {
+    public UserServiceImpl(UserDao userDao, RoleDao roleDao) {
         this.userDao = userDao;
         this.roleDao = roleDao;
-        this.rolePermissionDao = rolePermissionDao;
     }
 
     @Override
@@ -45,26 +43,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public void addRoleToUser(String userId, String roleName) {
         User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Role role = roleDao.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found"));
 
-        if (user.getRoles() == null) {
-            user.setRoles(new ArrayList<>());
+        List<Role> currentRoles = user.getRoles();
+        if (currentRoles == null) {
+            currentRoles = new ArrayList<>();
         }
-        user.getRoles().add(roleName);
+
+        currentRoles.add(role);
+        user.setRoles(currentRoles);
         userDao.save(user);
     }
 
+
     @Override
     public Set<Permission> getUserPermissions(List<String> roleNames) {
-        log.debug("List of role names: {}", roleNames);
-        Set<Permission> permissions = new HashSet<>();
+        return null;
+    }
 
-        for (String roleName : roleNames) {
-            RolePermission rolePermission = rolePermissionDao.findByRoleName(roleName)
-                    .orElseThrow(() -> new RuntimeException("RolePermission not found for role: " + roleName));
-
-            permissions.addAll(rolePermission.getPermissions());
-        }
-
-        return permissions;
+    public List<Role> getUserRole(String userId) {
+        User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getRoles();
     }
 }
