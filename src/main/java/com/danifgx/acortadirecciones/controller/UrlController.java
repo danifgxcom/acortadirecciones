@@ -58,6 +58,7 @@ public class UrlController {
         logger.info("Resolved to original URL: {}", originalUrl);
         Map<String, String> response = new HashMap<>();
         response.put("longUrl", originalUrl);
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

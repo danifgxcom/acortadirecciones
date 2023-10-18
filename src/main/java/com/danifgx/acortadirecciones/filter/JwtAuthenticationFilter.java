@@ -63,7 +63,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             user, null, new ArrayList<>()
                     );
 
-                    authenticationToken.setDetails(urlLengthsStr);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
                 else {

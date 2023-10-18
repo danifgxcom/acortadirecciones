@@ -1,5 +1,6 @@
 package com.danifgx.acortadirecciones.controller;
 
+import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,27 +26,33 @@ public class OptionsControllerTest {
     @Mock
     private Authentication authentication;
 
+    private User ayuser;
+
     private OptionsController optionsController;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         optionsController = new OptionsController(userService);
     }
 
-    private void setupAuthenticationWithRoles(String... roles) {
+    void setupAuthenticationWithRoles(String... roles) {
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
         for (String role : roles) {
             grantedAuthorities.add(new SimpleGrantedAuthority(role));
         }
         doReturn(grantedAuthorities).when(authentication).getAuthorities();
+
+        ayuser = new User();
+        ayuser.setEmail("ayuser@comunidad.mandril.es");
+        when(authentication.getPrincipal()).thenReturn(ayuser);
     }
 
     @Test
-    public void testAvailableLengthsForGoogleRole() {
+    void testAvailableLengthsForGoogleRole() {
         setupAuthenticationWithRoles("OIDC_USER");
 
-        when(authentication.getDetails()).thenReturn("24,32");
+        when(userService.getUserUrlLengths(ayuser.getId())).thenReturn(List.of(24, 32));
 
         List<Integer> result = optionsController.getAvailableLengths(authentication);
 
@@ -53,10 +60,10 @@ public class OptionsControllerTest {
     }
 
     @Test
-    public void testAvailableLengthsForPremiumRole() {
+    void testAvailableLengthsForPremiumRole() {
         setupAuthenticationWithRoles("PREMIUM");
 
-        when(authentication.getDetails()).thenReturn("16,24,32");
+        when(userService.getUserUrlLengths(ayuser.getId())).thenReturn(List.of(16, 24, 32));
 
         List<Integer> result = optionsController.getAvailableLengths(authentication);
 
@@ -64,10 +71,10 @@ public class OptionsControllerTest {
     }
 
     @Test
-    public void testAvailableLengthsForLifetimeRole() {
+    void testAvailableLengthsForLifetimeRole() {
         setupAuthenticationWithRoles("LIFETIME");
 
-        when(authentication.getDetails()).thenReturn("8,16,24,32");
+        when(userService.getUserUrlLengths(ayuser.getId())).thenReturn(List.of(8, 16, 24, 32));
 
         List<Integer> result = optionsController.getAvailableLengths(authentication);
 
@@ -75,13 +82,37 @@ public class OptionsControllerTest {
     }
 
     @Test
-    public void testAvailableLengthsForAnonymousRole() {
+    void testAvailableLengthsForAnonymousRole() {
         setupAuthenticationWithRoles("ANONYMOUS");
 
-        when(authentication.getDetails()).thenReturn("32");
+        when(userService.getUserUrlLengths(ayuser.getId())).thenReturn(List.of(32));
 
         List<Integer> result = optionsController.getAvailableLengths(authentication);
 
         assertEquals(List.of(32), result);
+    }
+
+    @Test
+    void shoudReturn24_whenCallingAsAnonymous() {
+        setupAuthenticationWithRoles("ANONYMOUS");
+
+        when(userService.getUserUrlLengths(ayuser.getId())).thenReturn(List.of(24, 32));
+
+        List<Integer> result = optionsController.getAvailableExpirationTimes(authentication);
+
+        assertEquals(List.of(24), result);
+
+    }
+
+    @Test
+    void shoudReturn24And48_whenCallingAsGoogle() {
+        setupAuthenticationWithRoles("ANONYMOUS");
+
+        when(authentication.getDetails()).thenReturn("24, 48");
+
+        List<Integer> result = optionsController.getAvailableExpirationTimes(authentication);
+
+        assertEquals(List.of(24, 48), result);
+
     }
 }

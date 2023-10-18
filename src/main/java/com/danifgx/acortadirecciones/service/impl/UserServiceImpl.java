@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -55,6 +56,45 @@ public class UserServiceImpl implements UserService {
 
 
     public List<Role> getUserRole(String userId) {
+        User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getRoles();
+    }
+
+
+    @Override
+    public void updateUserRoleAndAttributes(String userId, String newRoleName) {
+        User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Role newRole = roleDao.findByName(newRoleName).orElseThrow(() -> new RuntimeException("Role not found"));
+
+        List<Role> currentRoles = user.getRoles();
+        if (currentRoles == null) {
+            currentRoles = new ArrayList<>();
+        }
+
+        currentRoles.add(newRole);
+        user.setRoles(currentRoles);
+
+        userDao.save(user);
+    }
+
+    @Override
+    public List<Integer> getUserUrlLengths(String userId) {
+        User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getRoles().stream()
+                .flatMap(role -> role.getUrlLengths().stream())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Integer> getUserExpirationTimes(String userId) {
+        User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getRoles().stream()
+                .flatMap(role -> role.getExpirationTimes().stream())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Role> getUserRoles(String userId) {
         User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         return user.getRoles();
     }

@@ -35,7 +35,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         if (userDao.count() == 0) {
             User newUser = new User();
             newUser.setEmail("danifgx@gmail.com");
-            Optional<Role> premiumRole = roleRepository.findByName("PREMIUM");
+            Optional<Role> premiumRole = roleRepository.findByName("LIFETIME");
             if (premiumRole.isPresent()) {
                 newUser.setRoles(List.of(premiumRole.get()));
             }

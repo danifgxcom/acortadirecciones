@@ -25,7 +25,7 @@ public class CustomUserDetailsServiceImpl implements UserDetailsService {
         Optional<User> user = userRepository.findByUsername(username);
         if (user == null) {
             log.warn("User not found: {}", username);
-            throw new UsernameNotFoundException("Usuario no encontrado");
+            throw new UsernameNotFoundException("User not found");
         }
         log.info("User found: {}", username);
         return new CustomUserDetails(user.get());

@@ -1,6 +1,8 @@
 package com.danifgx.acortadirecciones.controller;
 
+import com.danifgx.acortadirecciones.entity.User;
 import com.danifgx.acortadirecciones.service.UserService;
+import com.danifgx.acortadirecciones.util.LoggingUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/option")
@@ -24,21 +25,23 @@ public class OptionsController {
 
     @GetMapping("/available-lengths")
     public List<Integer> getAvailableLengths(Authentication authentication) {
-        log.debug("Entrando en getAvailableLengths");
-        List<Integer> availableLengths = new ArrayList<>();
+        if (authentication != null) {
+            User user = (User) authentication.getPrincipal();
+            String userId = user.getId();
+            return userService.getUserUrlLengths(userId);
+        }
+        return new ArrayList<>();
+    }
+    @GetMapping("/available-expirations")
+    public List<Integer> getAvailableExpirationTimes(Authentication authentication) {
+        LoggingUtil.logCurrentMethod(log);
 
         if (authentication != null) {
-            String urlLengthsStr = (String) authentication.getDetails();
-
-            if (urlLengthsStr != null) {
-                availableLengths = List.of(urlLengthsStr.split(","))
-                        .stream()
-                        .map(Integer::parseInt)
-                        .collect(Collectors.toList());
-            }
+            User user = (User) authentication.getPrincipal();
+            String userId = user.getId();
+            return userService.getUserExpirationTimes(userId);
         }
-
-        return availableLengths;
+        return new ArrayList<>();
     }
 }
 
